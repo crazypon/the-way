@@ -1,30 +1,24 @@
 import socket
 
-HEADER = 64
-PORT = 5050
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-SERVER = "192.168.1.104"
-ADDR = (SERVER, PORT)
+HEADER_SIZE = 10
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(ADDR)
+sock_serv = socket.socket()
+sock_serv.connect(('localhost', 444))
 
-def send(msg):
-    message = msg.encode(FORMAT)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
-    send_length += b' ' * (HEADER - len(send_length))
-    client.send(send_length)
-    client.send(message)
-    print(client.recv(2048).decode(FORMAT))
+while True:
+    text = input('>>> ')
+    message = f'{len(text):<{HEADER_SIZE}}' + text
+    sock_serv.send(message.encode('utf-8'))
 
-send("Hello World!")
-input("[PRESS ENTER TO CONTINUE]")
-send("Hello Everyone!")
-input("[PRESS ENTER TO CONTINUE]")
-send("Hello Tishka and Alex!")
+    full_message = ''
+    new_message = True
+    while True:
+        msg = sock_serv.recv(50)
+        if new_message:
+            msg_len = int(msg[:HEADER_SIZE])
+            new_message = False
+        full_message += msg.decode('utf-8')
 
-send(DISCONNECT_MESSAGE)
-
-
+        if len(full_message) - HEADER_SIZE == msg_len:
+            print(full_message[HEADER_SIZE:])
+            new_message = True
