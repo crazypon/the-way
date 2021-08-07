@@ -1,44 +1,23 @@
 import socket
-import threading
 
-HEADER = 64
-PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname())
-ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
+HEADER_SIZE = 10
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(ADDR)
+sock_serv = socket.socket()
+sock_serv.bind(('localhost', 444))
+sock_serv.listen(5)
 
-
-def handle_client(conn, addr):
-    print(f"[NEW CONNECTION] {addr} connected.")
-
-    connected = True
-    while connected:
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = conn.recv(msg_length).decode(FORMAT)
-            if msg == DISCONNECT_MESSAGE:
-                connected = False
-
-            print(f"[{addr}] {msg}")
-            conn.send(msg.encode(FORMAT))
-
-    conn.close()
-
-
-def start():
-    server.listen()
-    print(f"[LISTENING] Server is listening on {SERVER}")
+while True:
+    conn, addr = sock_serv.accept()
+    full_message = ''
+    new_message = True
     while True:
-        conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
-        thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+        msg = conn.recv(50)
+        if new_message:
+            msg_len = int(msg[:HEADER_SIZE])
+            new_message = False
+        print(f'Message\'s length is : {msg_len}')
+        full_message += msg.decode('utf-8')
 
-
-print("[STARTING] server is starting...")
-start()
+        if len(full_message) - HEADER_SIZE == msg_len:
+            conn.send(full_message.encode('utf-8'))
+            new_message = True
