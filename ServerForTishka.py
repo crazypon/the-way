@@ -6,7 +6,6 @@ import sys
 sock_serv = socket.socket()
 sock_serv.bind(('localhost', 222))
 sock_serv.listen(5)
-exit_event = threading.Event()
 
 
 HEADER_SIZE = 10
